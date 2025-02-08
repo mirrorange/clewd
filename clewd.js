@@ -462,6 +462,17 @@ const updateParams = res => {
                     let {temperature} = body;
                     temperature = typeof temperature === 'number' ? Math.max(.1, Math.min(1, temperature)) : undefined; //temperature = Math.max(.1, Math.min(1, temperature));
                     let {messages} = body;
+
+                    messages = messages.map((message, index) => {
+                        let content = Array.isArray(message.content)
+                          ? message.content.map((c) => c.text).join("\n")
+                          : message.content;
+                        return {
+                            ...message,
+                            content
+                        };
+                    });
+
 /************************* */
                     const thirdKey = req.headers.authorization?.match(/(?<=(3rd|oai)Key:).*/), oaiAPI = /oaiKey:/.test(req.headers.authorization), forceModel = /--force/.test(body.model);
                     apiKey = thirdKey?.[0].split(',').map(item => item.trim()) || req.headers.authorization?.match(/sk-ant-api\d\d-[\w-]{86}-[\w-]{6}AA/g);
