@@ -854,6 +854,10 @@ const updateParams = res => {
                                 code: err.code || 500
                             }
                         }, 500);
+                        if (!apiKey) {
+                            console.log(`Error occurred! Triggering cookie change...\n`);
+                            CookieChanger();
+                        }
                     }
                 }
                 clearInterval(titleTimer);
@@ -870,8 +874,8 @@ const updateParams = res => {
                     console.log(`${200 == fetchAPI.status ? '[32m' : '[33m'}${fetchAPI.status}![0m\n`);
                     clewdStream.empty();
                 }
-                const shouldChange = exceeded_limit || !nochange && Config.Cookiecounter > 0 && changeflag++ >= Config.Cookiecounter - 1; //
-                if (!apiKey && (shouldChange || prevImpersonated)) { //if (prevImpersonated) {
+                const shouldChange = exceeded_limit || clewdStream?.error?.shouldChange || !nochange && Config.Cookiecounter > 0 && changeflag++ >= Config.Cookiecounter - 1;
+                if (!apiKey && (shouldChange || prevImpersonated)) {
                     try {
                         await deleteChat(Conversation.uuid);
                     } catch (err) {}
