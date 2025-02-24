@@ -191,7 +191,8 @@ let uuidOrg, curPrompt = {}, prevPrompt = {}, prevMessages = [], prevImpersonate
         xmlPlot: true,
         SkipRestricted: false,
         Artifacts: false,
-        Superfetch: true
+        Superfetch: true,
+        HideErrorDetails: false
     }
 };
 
